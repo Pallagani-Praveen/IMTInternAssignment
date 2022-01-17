@@ -1,23 +1,70 @@
-import logo from './logo.svg';
+
 import './App.css';
+import Navbar from './components/Navbar';
+import Home from './components/Home';
+import {useEffect,useState} from 'react';
 
 function App() {
+
+  const [data,setData] = useState({
+    'posts':[],
+    'currentPage':1,
+    'postsPerPage':10,
+    'currentPosts':[],
+    'search':'',
+    'isRequested':false
+});
+
+const url = 'https://jsonplaceholder.typicode.com/posts';
+    useEffect(()=>{
+        fetch(url).then(res=>res.json()).then(posts=>{
+            setData(prev=>({
+                ...prev,
+                'posts':posts,
+                'currentPosts':posts.slice(0,10),
+                'isRequested':true
+            }));
+        })
+    },[]);
+
+    const updatePosts = (e,pageNo) => {
+        
+        e.preventDefault();
+        const start = (pageNo-1)*10;
+        const end = pageNo*10;
+        
+        setData(prev=>({
+            ...prev,
+            'currentPage':pageNo,
+            'currentPosts':data.posts.slice(start,end),
+            'search':'',
+        }));
+
+    }
+
+  const updatePostsBySearch = (word) => {
+    let newPosts = [];
+    if(data.posts.length!==0) {
+      newPosts = data.posts.filter(post=>{
+        if(post.title.includes(word) || post.body.includes(word)) {
+          return true;
+        }
+        return false;
+      });
+    }
+    setData(prev=>({
+      ...prev,
+      'currentPosts':newPosts,
+      'search':word,
+      'currentPage':1
+    }));
+
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Navbar updatePostsBySearch={updatePostsBySearch}/>
+      <Home data={data} updatePosts={updatePosts}/>
     </div>
   );
 }
